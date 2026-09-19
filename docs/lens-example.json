@@ -1,0 +1,20 @@
+{
+  "id": "open-source-implementation",
+  "name": "Open-source implementation evidence",
+  "description": "Compare public technical claims without assuming benchmarks are comparable.",
+  "version": 1,
+  "criteria": [
+    {
+      "id": "implementation",
+      "label": "Concrete implementation",
+      "question": "What concrete implementation and supported platform are explicitly described?",
+      "rubric": "Select an explicit implementation passage. Unknown when only aspirations or unrelated material are supplied; not applicable when this is not an implementation source."
+    },
+    {
+      "id": "reproducibility",
+      "label": "Reproducibility",
+      "question": "What reproducible benchmark method, dataset, hardware and limitations are supplied?",
+      "rubric": "Select the most direct methods passage. A performance slogan alone is unknown; not applicable when the source makes no benchmark claim. Never infer comparable hardware or conditions."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+PRAGMA journal_mode=WAL;
+PRAGMA foreign_keys=ON;
+PRAGMA busy_timeout=5000;
+CREATE TABLE IF NOT EXISTS migrations(version INTEGER PRIMARY KEY);
+INSERT OR IGNORE INTO migrations VALUES(1);
+CREATE TABLE IF NOT EXISTS missions(id TEXT PRIMARY KEY, goal TEXT NOT NULL, status TEXT NOT NULL, plan TEXT NOT NULL, plan_version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, parent_id TEXT, mode TEXT NOT NULL DEFAULT 'live');
+CREATE TABLE IF NOT EXISTS plans(id TEXT PRIMARY KEY, mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, version INTEGER NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS records(id TEXT PRIMARY KEY, mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, kind TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS records_mission ON records(mission_id,kind);
+CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY, mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, seq INTEGER NOT NULL, timestamp TEXT NOT NULL, type TEXT NOT NULL, payload TEXT NOT NULL, mode TEXT NOT NULL, parent_id TEXT, schema_version INTEGER NOT NULL, UNIQUE(mission_id,seq));
+CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS commands(key TEXT PRIMARY KEY,mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE,action TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS reservations(id TEXT PRIMARY KEY,mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE,status TEXT NOT NULL,reserved_usd REAL NOT NULL,reserved_tokens INTEGER NOT NULL,actual_usd REAL,actual_tokens INTEGER,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS cache(key TEXT PRIMARY KEY,kind TEXT NOT NULL,created_at TEXT NOT NULL,payload TEXT NOT NULL);
+CREATE VIRTUAL TABLE IF NOT EXISTS mission_search USING fts5(mission_id UNINDEXED,goal);
+CREATE TRIGGER IF NOT EXISTS mission_insert AFTER INSERT ON missions BEGIN INSERT INTO mission_search(mission_id,goal) VALUES(new.id,new.goal); END;
+CREATE TRIGGER IF NOT EXISTS mission_delete AFTER DELETE ON missions BEGIN DELETE FROM mission_search WHERE mission_id=old.id; END;
+CREATE TRIGGER IF NOT EXISTS mission_update AFTER UPDATE OF goal ON missions BEGIN UPDATE mission_search SET goal=new.goal WHERE mission_id=new.id; END;

@@ -1,0 +1,7 @@
+{
+  "name":"jev-radar-ui","version":"0.1.0","private":true,"type":"module",
+  "description":"Jev Radar by Eliovp public research workspace",
+  "scripts":{"dev":"vite --host 127.0.0.1","build":"tsc --noEmit && vite build","preview":"vite preview --host 127.0.0.1"},
+  "dependencies":{"react":"19.3.0","react-dom":"19.3.0","@xyflow/react":"12.11.6","lucide-react":"1.47.0"},
+  "devDependencies":{"vite":"8.3.0","@vitejs/plugin-react":"6.1.1","typescript":"7.0.2","@types/react":"19.3.0","@types/react-dom":"19.3.0"}
+}

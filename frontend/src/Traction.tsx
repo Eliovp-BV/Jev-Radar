@@ -1,0 +1,37 @@
+import {ExternalLink,Upload} from 'lucide-react';
+import {short,type Item} from './api';
+
+type Filters=Record<string,string>;
+const dimensions=['provider','topic','language','country','format','url'] as const;
+const names:Record<string,string>={provider:'Provider',topic:'Topic',language:'Language',country:'Country',format:'Format',url:'Page'};
+function summary(metrics:Item[]):Item[]{
+ const groups=new Map<string,Item>();
+ for(const m of metrics){
+  const fields=['provider','kind','metric','unit','window_start','window_end','country','device','language','format','topic'];
+  const aggregation=m.query?'page/query':'page';
+  const key=JSON.stringify([aggregation,...fields.map(k=>m[k]??null),...(!m.window_start||!m.window_end?[m.measured_at]:[])]);
+  if(!groups.has(key))groups.set(key,{...m,aggregation,values:[],missing:0,pages:new Set<string>()});
+  const g=groups.get(key)!;g.pages.add(m.url);if(m.value==null)g.missing++;else g.values.push(m.value);
+ }
+ return [...groups.values()].map(g=>{const v:number[]=g.values.sort((a:number,b:number)=>a-b);return {...g,n:v.length,pages:g.pages.size,median:v.length?(v[Math.floor((v.length-1)/2)]+v[Math.floor(v.length/2)])/2:null}});
+}
+export default function Traction({sources,searches,imports,metrics,filters,setFilters,onSource,onImport,page,setPage}:{sources:Item[];searches:Item[];imports:Item[];metrics:Item[];filters:Filters;setFilters:(v:Filters)=>void;onSource:(id:string)=>void;onImport:()=>void;page:number;setPage:(n:number)=>void}){
+ const filtered=metrics.filter(m=>dimensions.every(k=>!filters[k]||m[k]===filters[k])&&(!filters.from||(m.window_start&&m.window_start.slice(0,10)>=filters.from))&&(!filters.to||(m.window_end&&m.window_end.slice(0,10)<=filters.to)));
+ const cohorts=summary(filtered), reach=filtered.filter(m=>m.metric!=='conversions'),outcomes=filtered.filter(m=>m.metric==='conversions');
+ const change=(k:string,v:string)=>{setFilters({...filters,[k]:v});setPage(0)};
+ const trail=sources.filter(s=>!filters.url||s.url===filters.url).slice().sort((a,b)=>Date.parse(b.source_date||b.retrieved_at)-Date.parse(a.source_date||a.retrieved_at));
+ const metricRow=(m:Item)=><div className="metric-row" key={m.id}><span className="badge">{m.kind==='asserted'?'Publisher assertion':'User-supplied'}</span><span>{m.metric}: <strong>{m.value??'Unknown'}</strong> {m.unit}<small>{m.provider} · {m.provenance}<br/>Measured {m.measured_at} · period {m.window_start?.slice(0,10)||'unknown'} → {m.window_end?.slice(0,10)||'unknown'}</small></span><a href={m.url} target="_blank" rel="noreferrer" title="Original page"><ExternalLink size={15}/></a></div>;
+ return <div className="traction scroll">
+  <div className="section-heading"><h3>Observed traction trail</h3><button className="secondary" onClick={onImport}><Upload size={14}/>Import analytics</button></div>
+  <p className="scope-note">Source artifacts, reach observations and commercial outcomes remain separate. Unknown does not mean zero.</p>
+  <details className="traction-filters" open><summary>Match metric dimensions & periods</summary><div className="traction-filter-grid">{dimensions.map(k=><label key={k}>{names[k]}<select aria-label={'Metric '+names[k].toLowerCase()} value={filters[k]||''} onChange={e=>change(k,e.target.value)}><option value="">{k==='country'?'All countries':'All '+names[k].toLowerCase()+'s'}</option>{[...new Set(metrics.map(m=>m[k]).filter(Boolean))].sort().map(v=><option key={v} value={v}>{short(v,65)}</option>)}</select></label>)}<label>Period starts on / after<input type="date" aria-label="Metric period from" value={filters.from||''} onChange={e=>change('from',e.target.value)}/></label><label>Period ends on / before<input type="date" aria-label="Metric period to" value={filters.to||''} onChange={e=>change('to',e.target.value)}/></label></div><p className="small muted">{filtered.length} of {metrics.length} observations match. Dates require a known, fully contained measurement period. Missing dimensions remain unknown; aggregate and query rows stay separate.</p><button className="text-button" onClick={()=>{setFilters({});setPage(0)}}>Clear metric filters</button></details>
+  <h4>Dated source artifacts</h4><p className="small muted">Publication dates are source claims. Where absent, retrieval time only establishes when Radar inspected the page. A collected page is not evidence of audience reach.</p>
+  {trail.slice(0,80).map(s=><button key={s.id} className="feature-row" onClick={()=>onSource(s.id)}><span>{short(s.title,65)}<small>{s.source_date?'Claimed source date: '+s.source_date:'Retrieved: '+s.retrieved_at}</small></span><span className="badge">{s.purpose||'unassessed'}</span></button>)}{!trail.length&&<p className="empty-inline">No inspected source artifacts match this page.</p>}
+  <h4>Search observations</h4>{searches.map(s=><div className="observation" key={s.id}><div className="card-meta"><span className="badge">{s.provider}</span><span>{new Date(s.timestamp).toLocaleString()}</span></div><h3>{s.query}</h3><p className="small muted">{s.scope}</p>{s.results.map((r:Item)=><a key={r.id} href={r.url} target="_blank" rel="noreferrer" className="search-result"><span>{r.position}</span>{r.title}<ExternalLink size={13}/></a>)}</div>)}
+  {imports.map(s=><div className="observation" key={s.id}><span className="badge">User-supplied search observation</span><p>{s.query} · position {s.position} · {s.provider}</p><a href={s.url} target="_blank" rel="noreferrer">{s.url}</a><small>{s.provenance} · {s.measured_at}</small></div>)}{!searches.length&&!imports.length&&<p className="empty-inline">No search observations collected. Seed crawling does not measure search visibility.</p>}
+  <h4>Content features · source assessments</h4>{sources.map(s=><button key={s.id} className="feature-row" onClick={()=>onSource(s.id)}><span>{short(s.title,55)}</span><span className="badge">{s.purpose||'unassessed'}</span><span className="small">Original-data claim: {s.original_data_claim==null?'unknown':s.original_data_claim>=.8?'indicated':s.original_data_claim<=.2?'not indicated in excerpt':'uncertain'}</span></button>)}
+  <h4>Comparable collected cohorts</h4><p className="small muted">Computed from the matching observations, including ordinary and low values. Each group matches provider, evidence kind, unit, period and supplied dimensions. Descriptive associations only; suppressed and missing rows remain a limitation.</p>{cohorts.map((c,i)=><div className="cohort" key={i}><strong>{c.provider} · {c.metric} · {c.aggregation}</strong><p>Median {c.median??'unknown'} {c.unit} · n={c.n} · {c.missing} missing · {c.pages} pages</p><small>{c.window_start?.slice(0,10)||'unknown period'} → {c.window_end?.slice(0,10)||'unknown period'} · {c.country||'country unspecified'} · {c.device||'device unspecified'}</small></div>)}
+  <h4>Reach & search metrics</h4>{reach.slice(page*20,page*20+20).map(metricRow)}{!reach.length&&<p className="empty-inline">Reach is unknown in this collected evidence.</p>}{reach.length>20&&<div className="pager"><button disabled={page===0} onClick={()=>setPage(page-1)}>Previous</button><span>{page+1} / {Math.ceil(reach.length/20)}</span><button disabled={(page+1)*20>=reach.length} onClick={()=>setPage(page+1)}>Next</button></div>}
+  <h4>Owner-supplied commercial outcomes</h4>{outcomes.slice(0,200).map(metricRow)}{!outcomes.length&&<p className="empty-inline">Conversions and commercial results are unknown. Website copy cannot establish them.</p>}
+ </div>;
+}

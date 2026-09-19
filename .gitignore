@@ -1,0 +1,41 @@
+.env
+.env.*
+!.env.example
+.venv/
+node_modules/
+frontend/dist/
+data/
+.runtime/
+.cache/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.sqlite*
+*.db*
+*.log
+*.png
+*.jpg
+*.webp
+*.gif
+*.mp4
+*.webm
+*.mov
+# Only these visually reviewed public demo assets may be exported.
+!/docs/media/radar-home.png
+!/docs/media/radar-live.png
+!/docs/media/radar-results.png
+!/docs/media/radar-demo.mp4
+!/docs/media/radar-demo.gif
+*.zip
+exports/
+snapshots/
+browser-profiles/
+test-results/
+playwright-report/
+.DS_Store
+# Local notes and prepared source archives are never publication inputs.
+private/
+*.tar.gz
+*.tgz
+# Generated archive inventory; regenerated on every source export.
+/SOURCE_MANIFEST.json

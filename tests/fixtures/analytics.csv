@@ -1,0 +1,2 @@
+page,provider,measured_at,window_start,window_end,country,device,query,clicks,impressions,ctr,position,conversions
+https://example.com/,Fixture Search Console export,2026-08-31,2026-08-01,2026-08-31,BE,desktop,fixture query,12,100,0.12,4.5,

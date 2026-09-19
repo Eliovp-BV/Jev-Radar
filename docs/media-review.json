@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "visually_reviewed": true,
+  "contains_only_public_demo": true,
+  "assets": [
+    {
+      "path": "docs/media/radar-demo.gif",
+      "sha256": "998ab7b2b5f92ae2b1ade7ea664b0bc019cdecaf398e876842208a63128d7c69"
+    },
+    {
+      "path": "docs/media/radar-demo.mp4",
+      "sha256": "9ab798a5301136d25aadfca3c134f3256129a30dc3540f54d0190460b312b299"
+    },
+    {
+      "path": "docs/media/radar-home.png",
+      "sha256": "3717d48b3678e050fa7086d9b26b0a3712dbd04e9d6c96b846fec8449e50e1f9"
+    },
+    {
+      "path": "docs/media/radar-live.png",
+      "sha256": "3aa7ed7ac5f4ec09248ce728b1158eae84866073ca426b916454ea33655a46e9"
+    },
+    {
+      "path": "docs/media/radar-results.png",
+      "sha256": "021be56967250bddc5aee00ae6dd5680f3b466417e6bcde89122ff94c14e3244"
+    }
+  ]
+}

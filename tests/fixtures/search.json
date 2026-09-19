@@ -1,0 +1,12 @@
+[
+  {
+    "url": "https://example.com/",
+    "query": "fixture query",
+    "provider": "Fixture provider",
+    "position": 1,
+    "measured_at": "2026-08-31T12:00:00Z",
+    "language": "en",
+    "region": "BE",
+    "title": "Fixture only — not a real search observation"
+  }
+]

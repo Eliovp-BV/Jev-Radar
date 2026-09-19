@@ -1,0 +1,36 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: Python ${{ matrix.python }} / Node 22
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install and build without browser download
+        env:
+          RADAR_PYTHON: python
+        run: ./scripts/install.sh
+      - name: Run core tests without hosted inference
+        run: .venv/bin/pytest -q --ignore=tests/test_browser.py
+      - name: Check public source boundaries
+        run: .venv/bin/python scripts/export_public.py --check
